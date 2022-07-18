@@ -50,7 +50,6 @@ document.getElementById("search-button").addEventListener("click", function () {
         const tweetResults = archives[searchOption].filter(function(tweet) {
             let filterOK = getFullText(tweet).includes(searchText);
             if (filterOK && searchOption.endsWith("tweet")) {
-                console.log("LOL");
                 filterOK = filterOK && filterResult(tweet);
             }
             return filterOK;

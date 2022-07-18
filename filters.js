@@ -71,34 +71,46 @@ const filters = [
 
 function filterResult(tweet) {
     let filterOK;
-    console.log("LOLLL");
+    let noFilters = true;
+    
     const incFilters = Array.from(document.getElementsByClassName("inc-filter"));
     if (document.getElementById("inc-filter-and").checked) {
         filterOK = true;
-        for (i = 0; i < filters.length && i < incFilters.length && filterOK; i++) {
-            console.log(incFilters[i].id + ": " + incFilters[i].checked);
-            filterOK = filterOK && (!incFilters[i].checked || filters[i](tweet));
+        for (i = 0; i < filters.length && i < incFilters.length && filterOK && incFilters[i].checked; i++) {
+            filterOK = filterOK && filters[i](tweet);
+            noFilters = false;
         }
+        filterOK = noFilters && filterOK;
     } else if (document.getElementById("inc-filter-or").checked) {
         filterOK = false;
-        for (i = 0; i < filters.length && i < incFilters.length && !filterOK; i++) {
-            console.log(incFilters[i].id + ": " + incFilters[i].checked);
-            filterOK = filterOK || (!incFilters[i].checked || filters[i](tweet));
+        for (i = 0; i < filters.length && i < incFilters.length && !filterOK && incFilters[i].checked; i++) {
+            filterOK = filterOK || filters[i](tweet);
+            noFilters = false;
         }
+        filterOK = noFilters || filterOK;
     }
+    
+    
     if (filterOK) {
+        noFilters = true;
+
         const excFilters = Array.from(document.getElementsByClassName("exc-filter"));
         if (document.getElementById("exc-filter-and").checked) {
-            for (i = 0; i < filters.length && i < excFilters.length && filterOK; i++) {
-                console.log(excFilters[i].id + ": " + excFilters[i].checked);
-                filterOK = filterOK && (!excFilters[i].checked && !filters[i](tweet));
+            filterOK = true;
+            for (i = 0; i < filters.length && i < excFilters.length && filterOK && excFilters[i].checked; i++) {
+                filterOK = filterOK && !filters[i](tweet);
+                noFilters = false;
             }
+            filterOK = noFilters && filterOK;
         } else if (document.getElementById("exc-filter-or").checked) {
-            for (i = 0; i < filters.length && i < excFilters.length && !filterOK; i++) {
-                console.log(excFilters[i].id + ": " + excFilters[i].checked);
-                filterOK = filterOK || !(excFilters[i].checked && filters[i](tweet));
+            filterOK = false;
+            for (i = 0; i < filters.length && i < excFilters.length && !filterOK && excFilters[i].checked; i++) {
+                filterOK = filterOK || !filters[i](tweet);
+                noFilters = false;
             }
+            filterOK = noFilters || filterOK;
         }
     }
+    
     return filterOK;
 }
