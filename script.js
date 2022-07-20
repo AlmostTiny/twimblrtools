@@ -23,56 +23,63 @@ document.getElementById("search-button").addEventListener("click", function () {
     const searchOption = document.getElementById("search-option").value;
     const searchText = document.getElementById("search-text").value;
     let searchResults = document.createElement("p");
+    
+    if (resultsContainer.hasChildNodes()) {
+        resultsContainer.removeChild(resultsContainer.firstChild);
+    }
 
-    if (searchText !== "") {
-        if (resultsContainer.hasChildNodes()) {
-            resultsContainer.removeChild(resultsContainer.firstChild);
+    function getFullText(archiveItem) {
+        let fullText = "";
+        if (searchOption.endsWith("tweet")) {
+            fullText = archiveItem.tweet.full_text;
+        } else if (searchOption.endsWith("like")) {
+            fullText = archiveItem.like.fullText;
+        }
+        return fullText;
+    }
+
+    function getTimeStamp(archiveItem) {
+        let timeStamp = "";
+        if (searchOption.endsWith("tweet")) {
+            timeStamp = archiveItem.tweet.created_at;
+        }
+        return timeStamp;
+    }
+
+    const tweetResults = archives[searchOption].filter(function(tweet) {
+        let filterOK = false;
+        if (searchOption.endsWith("tweet")) {
+            if (searchText !== "") {
+                filterOK = getFullText(tweet).includes(searchText) && filterResult(tweet);
+            }
+            else if (checkedFilters.size > 0) {
+                filterOK = filterResult(tweet);
+            }
+        }
+        else if (searchOption.endsWith("like") && searchText !== "") {
+            filterOK = getFullText(tweet).includes(searchText);
         }
 
-        function getFullText(archiveItem) {
-            let fullText = "";
-            if (searchOption.endsWith("tweet")) {
-                fullText = archiveItem.tweet.full_text;
-            } else if (searchOption.endsWith("like")) {
-                fullText = archiveItem.like.fullText;
-            }
-            return fullText;
-        }
+        return filterOK;
+    });
 
-        function getTimeStamp(archiveItem) {
-            let timeStamp = "";
-            if (searchOption.endsWith("tweet")) {
-                timeStamp = archiveItem.tweet.created_at;
-            }
-            return timeStamp;
-        }
+    if (tweetResults.length > 0) {
+        searchResults = document.createElement("ul");
+        resultsContainer.appendChild(searchResults);
 
-        const tweetResults = archives[searchOption].filter(function(tweet) {
-            let filterOK = getFullText(tweet).includes(searchText);
-            if (filterOK && searchOption.endsWith("tweet")) {
-                filterOK = filterOK && filterResult(tweet);
-            }
-            return filterOK;
-        });
-
-        if (tweetResults.length > 0) {
-            searchResults = document.createElement("ul");
-            resultsContainer.appendChild(searchResults);
-
-            if (searchOption.endsWith("tweet")) {
-                tweetResults.sort(function (tweet1, tweet2) {
-                    return (new Date(tweet1.tweet.created_at).getTime() > new Date(tweet2.tweet.created_at).getTime());
-                });
-            }
-
-            tweetResults.forEach((tweet) => {
-                const tweetResult = document.createElement("li");
-                tweetResult.appendChild(document.createTextNode(`${getTimeStamp(tweet)} ${getFullText(tweet)}`));
-                searchResults.appendChild(tweetResult);
+        if (searchOption.endsWith("tweet")) {
+            tweetResults.sort(function (tweet1, tweet2) {
+                return (new Date(tweet1.tweet.created_at).getTime() > new Date(tweet2.tweet.created_at).getTime());
             });
-        } else {
-            searchResults.appendChild(document.createTextNode(`\"${searchText}\" is nowhere to be found :(`));
-            resultsContainer.appendChild(searchResults);
         }
+
+        tweetResults.forEach((tweet) => {
+            const tweetResult = document.createElement("li");
+            tweetResult.appendChild(document.createTextNode(`${getTimeStamp(tweet)} ${getFullText(tweet)}`));
+            searchResults.appendChild(tweetResult);
+        });
+    } else if (searchText !== "") {
+        searchResults.appendChild(document.createTextNode(`\"${searchText}\" is nowhere to be found :(`));
+        resultsContainer.appendChild(searchResults);
     }
 });

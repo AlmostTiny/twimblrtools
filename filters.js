@@ -1,13 +1,26 @@
+let checkedFilters = new Set();
+
 function setFilterRules(filter1, filter2) {
     Array.from(document.getElementsByClassName(filter1)).forEach((filter) => {
         const otherFilter = document.getElementsByClassName(filter2)[filter.name];
         if (filter.checked) {
+            checkedFilters.add(filter);
             otherFilter.disabled = false;
             otherFilter.checked = false;
+            checkedFilters.delete(otherFilter);
             otherFilter.disabled = true;
+        }
+        else {
+            checkedFilters.delete(filter);
         }
         filter.addEventListener("change", function () {
             otherFilter.disabled = !otherFilter.disabled;
+            if (checkedFilters.has(filter)) {
+                checkedFilters.delete(filter);
+            }
+            else {
+                checkedFilters.add(filter);
+            }
         });
     });
 }
@@ -70,45 +83,41 @@ const filters = [
 ];
 
 function filterResult(tweet) {
-    let filterOK;
-    let noFilters = true;
-    
-    const incFilters = Array.from(document.getElementsByClassName("inc-filter"));
-    if (document.getElementById("inc-filter-and").checked) {
-        filterOK = true;
-        for (i = 0; i < filters.length && i < incFilters.length && filterOK && incFilters[i].checked; i++) {
-            filterOK = filterOK && filters[i](tweet);
-            noFilters = false;
+    let filterOK = true;
+
+    const checkedIncFilters = new Set(Array.from(checkedFilters).filter(function(filter) {
+        return filter.className === "inc-filter";
+    }));
+    if (checkedIncFilters.size > 0) {
+        const incFilters = Array.from(document.getElementsByClassName("inc-filter"));
+        if (document.getElementById("inc-filter-and").checked) {
+            filterOK = true;
+            for (i = 0; i < filters.length && i < incFilters.length && filterOK && incFilters[i].checked; i++) {
+                filterOK = filterOK && filters[i](tweet);
+            }
+        } else if (document.getElementById("inc-filter-or").checked) {
+            filterOK = false;
+            for (i = 0; i < filters.length && i < incFilters.length && !filterOK && incFilters[i].checked; i++) {
+                filterOK = filterOK || filters[i](tweet);
+            }
         }
-        filterOK = noFilters && filterOK;
-    } else if (document.getElementById("inc-filter-or").checked) {
-        filterOK = false;
-        for (i = 0; i < filters.length && i < incFilters.length && !filterOK && incFilters[i].checked; i++) {
-            filterOK = filterOK || filters[i](tweet);
-            noFilters = false;
-        }
-        filterOK = noFilters || filterOK;
     }
     
-    
-    if (filterOK) {
-        noFilters = true;
-
+    const checkedExcFilters = new Set(Array.from(checkedFilters).filter(function(filter) {
+        return filter.className === "exc-filter";
+    }));
+    if (filterOK && checkedExcFilters.size > 0) {
         const excFilters = Array.from(document.getElementsByClassName("exc-filter"));
         if (document.getElementById("exc-filter-and").checked) {
             filterOK = true;
             for (i = 0; i < filters.length && i < excFilters.length && filterOK && excFilters[i].checked; i++) {
                 filterOK = filterOK && !filters[i](tweet);
-                noFilters = false;
             }
-            filterOK = noFilters && filterOK;
         } else if (document.getElementById("exc-filter-or").checked) {
             filterOK = false;
             for (i = 0; i < filters.length && i < excFilters.length && !filterOK && excFilters[i].checked; i++) {
                 filterOK = filterOK || !filters[i](tweet);
-                noFilters = false;
             }
-            filterOK = noFilters || filterOK;
         }
     }
     
