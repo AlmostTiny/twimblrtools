@@ -50,14 +50,27 @@ document.getElementById("search-button").addEventListener("click", function () {
         let filterOK = false;
         if (searchOption.endsWith("tweet")) {
             if (searchText !== "") {
-                filterOK = getFullText(tweet).includes(searchText) && filterResult(tweet);
+                if (document.getElementById("regex-search").checked) {
+                    const regex = new RegExp(searchText);
+                    filterOK = regex.test(getFullText(tweet));
+                }
+                else {
+                    filterOK = getFullText(tweet).includes(searchText);
+                }
+                filterOK = filterOK && filterResult(tweet);
             }
             else if (checkedFilters.size > 0) {
                 filterOK = filterResult(tweet);
             }
         }
         else if (searchOption.endsWith("like") && searchText !== "") {
-            filterOK = getFullText(tweet).includes(searchText);
+            if (document.getElementById("regex-search").checked) {
+                const regex = new RegExp(searchText);
+                filterOK = regex.test(getFullText(tweet));
+            }
+            else {
+                filterOK = getFullText(tweet).includes(searchText);
+            }
         }
 
         return filterOK;
