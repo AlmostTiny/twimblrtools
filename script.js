@@ -25,7 +25,9 @@ document.getElementById("search-button").addEventListener("click", function () {
     let searchResults = document.createElement("p");
     
     if (resultsContainer.hasChildNodes()) {
-        resultsContainer.removeChild(resultsContainer.firstChild);
+        Array.from(resultsContainer.childNodes).forEach(childNode => {
+            resultsContainer.removeChild(childNode);
+        });
     }
 
     function getFullText(archiveItem) {
@@ -69,6 +71,8 @@ document.getElementById("search-button").addEventListener("click", function () {
     });
 
     if (tweetResults.length > 0) {
+        resultsContainer.appendChild(document.createElement("br"));
+        resultsContainer.appendChild(document.createTextNode(`Results found: ${tweetResults.length}`));
         searchResults = document.createElement("ul");
         resultsContainer.appendChild(searchResults);
 
