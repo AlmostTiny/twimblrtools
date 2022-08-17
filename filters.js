@@ -1,31 +1,77 @@
-let checkedFilters = new Set();
+let checkedFilters = {
+    allFilters: new Set(),
+    incFilters: new Set(),
+    excFilters: new Set()
+};
 
 function setFilterRules(filter1, filter2) {
     Array.from(document.getElementsByClassName(filter1)).forEach((filter) => {
         const otherFilter = document.getElementsByClassName(filter2)[filter.name];
         if (filter.checked) {
-            checkedFilters.add(filter);
+            if (filter.className === "inc-filter") {
+                checkedFilters.incFilters.add(filter);
+                checkedFilters.excFilters.delete(otherFilter);
+            }
+            else if (filter.className === "exc-filter") {
+                checkedFilters.excFilters.add(filter);
+                checkedFilters.incFilters.delete(otherFilter);
+            }
+            checkedFilters.allFilters.add(filter);
             otherFilter.disabled = false;
             otherFilter.checked = false;
-            checkedFilters.delete(otherFilter);
+            checkedFilters.allFilters.delete(otherFilter);
             otherFilter.disabled = true;
         }
         else {
-            checkedFilters.delete(filter);
+            checkedFilters.allFilters.delete(filter);
+            if (filter.className === "inc-filter") {
+                checkedFilters.incFilters.delete(filter);
+            }
+            else if (filter.className === "exc-filter") {
+                checkedFilters.excFilters.delete(filter);
+            }
         }
         filter.addEventListener("change", function () {
             otherFilter.disabled = !otherFilter.disabled;
-            if (checkedFilters.has(filter)) {
-                checkedFilters.delete(filter);
+            if (filter.className === "inc-filter") {
+                if (checkedFilters.incFilters.has(filter)) {
+                    checkedFilters.incFilters.delete(filter);
+                    checkedFilters.allFilters.delete(filter);
+                }
+                else {
+                    checkedFilters.incFilters.add(filter);
+                    checkedFilters.allFilters.add(filter);
+                }
             }
-            else {
-                checkedFilters.add(filter);
+            else if (filter.className === "exc-filter") {
+                if (checkedFilters.excFilters.has(filter)) {
+                    checkedFilters.excFilters.delete(filter);
+                    checkedFilters.allFilters.delete(filter);
+                }
+                else {
+                    checkedFilters.excFilters.add(filter);
+                    checkedFilters.allFilters.add(filter);
+                }
             }
         });
     });
 }
+
 setFilterRules("inc-filter", "exc-filter");
 setFilterRules("exc-filter", "inc-filter");
+
+console.log("ALL FILTERS:");
+checkedFilters.allFilters.forEach(filter => {
+    console.log(filter);
+});
+console.log("INC FILTERS:");
+checkedFilters.incFilters.forEach(filter => {
+    console.log(filter);
+});
+console.log("EXC FILTERS:");
+checkedFilters.excFilters.forEach(filter => {
+    console.log(filter);
+});
 
 function retweetFilter(tweet) {
     if (tweet.tweet.full_text.startsWith("RT @") && tweet.tweet.entities.user_mentions.length === 1) {
@@ -73,51 +119,60 @@ function youtubeFilter(tweet) {
     return false;
 }
 
-const filters = [
-    function (tweet) {return retweetFilter(tweet);},
-    function (tweet) {return replyFilter(tweet);},
-    function (tweet) {return threadFilter(tweet);},
-    function (tweet) {return mediaFilter(tweet);},
-    function (tweet) {return spotifyFilter(tweet);},
-    function (tweet) {return youtubeFilter(tweet);},
-];
+const filters = {
+    retweet: function(tweet) {
+        return retweetFilter(tweet);
+    },
+    reply: function(tweet) {
+        return replyFilter(tweet);
+    },
+    thread: function(tweet) {
+        return threadFilter(tweet);
+    },
+    media: function(tweet) {
+        return mediaFilter(tweet);
+    },
+    spotify: function(tweet) {
+        return spotifyFilter(tweet);
+    },
+    youtube: function(tweet) {
+        return youtubeFilter(tweet);
+    }
+};
 
 function filterResult(tweet) {
-    let filterOK = true;
+    let filterOK = false;
 
-    const checkedIncFilters = new Set(Array.from(checkedFilters).filter(function(filter) {
-        return filter.className === "inc-filter";
-    }));
-    if (checkedIncFilters.size > 0) {
-        const incFilters = Array.from(document.getElementsByClassName("inc-filter"));
+    if (checkedFilters.incFilters.size > 0) {
         if (document.getElementById("inc-filter-and").checked) {
             filterOK = true;
-            for (i = 0; i < filters.length && i < incFilters.length && filterOK && incFilters[i].checked; i++) {
-                filterOK = filterOK && filters[i](tweet);
-            }
-        } else if (document.getElementById("inc-filter-or").checked) {
+            checkedFilters.incFilters.forEach(filter => {
+                filterOK = filterOK && filters[filter.name](tweet);
+            });
+        }
+        else if (document.getElementById("inc-filter-or").checked) {
             filterOK = false;
-            for (i = 0; i < filters.length && i < incFilters.length && !filterOK && incFilters[i].checked; i++) {
-                filterOK = filterOK || filters[i](tweet);
-            }
+            checkedFilters.incFilters.forEach(filter => {
+                filterOK = filterOK || filters[filter.name](tweet);
+            });
         }
     }
+    else {
+        filterOK = true;
+    }
     
-    const checkedExcFilters = new Set(Array.from(checkedFilters).filter(function(filter) {
-        return filter.className === "exc-filter";
-    }));
-    if (filterOK && checkedExcFilters.size > 0) {
-        const excFilters = Array.from(document.getElementsByClassName("exc-filter"));
+    if (filterOK && checkedFilters.excFilters.size > 0) {
         if (document.getElementById("exc-filter-and").checked) {
             filterOK = true;
-            for (i = 0; i < filters.length && i < excFilters.length && filterOK && excFilters[i].checked; i++) {
-                filterOK = filterOK && !filters[i](tweet);
-            }
-        } else if (document.getElementById("exc-filter-or").checked) {
+            checkedFilters.excFilters.forEach(filter => {
+                filterOK = filterOK && !filters[filter.name](tweet);
+            });
+        }
+        else if (document.getElementById("exc-filter-or").checked) {
             filterOK = false;
-            for (i = 0; i < filters.length && i < excFilters.length && !filterOK && excFilters[i].checked; i++) {
-                filterOK = filterOK || !filters[i](tweet);
-            }
+            checkedFilters.excFilters.forEach(filter => {
+                filterOK = filterOK || !filters[filter.name](tweet);
+            });
         }
     }
     
