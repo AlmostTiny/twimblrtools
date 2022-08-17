@@ -60,19 +60,6 @@ function setFilterRules(filter1, filter2) {
 setFilterRules("inc-filter", "exc-filter");
 setFilterRules("exc-filter", "inc-filter");
 
-console.log("ALL FILTERS:");
-checkedFilters.allFilters.forEach(filter => {
-    console.log(filter);
-});
-console.log("INC FILTERS:");
-checkedFilters.incFilters.forEach(filter => {
-    console.log(filter);
-});
-console.log("EXC FILTERS:");
-checkedFilters.excFilters.forEach(filter => {
-    console.log(filter);
-});
-
 function retweetFilter(tweet) {
     if (tweet.tweet.full_text.startsWith("RT @") && tweet.tweet.entities.user_mentions.length === 1) {
         let screenName = tweet.tweet.full_text.substring(4).split(": ")[0];
